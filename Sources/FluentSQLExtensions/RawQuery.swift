@@ -31,8 +31,8 @@ public struct RawQuery {
         if q.isEmpty { return } // Do nothing if the query is empty
         
         // Add a space if required
-        if let last = query.characters.last { // See if there are any characters yet
-            if last != " " && q.characters.first! != " " {       // If the last character wasn't a space and neither is the first character of the exisitng query
+        if let last = query.last { // See if there are any characters yet
+            if last != " " && q.first! != " " {       // If the last character wasn't a space and neither is the first character of the exisitng query
                 query.append(" ")
             }
         }
