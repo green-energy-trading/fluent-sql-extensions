@@ -5,6 +5,7 @@ import PackageDescription
 let package = Package(
     name: "FluentSQLExtensions",
     products: [
+        .library(name: "FluentSQLExtensions", targets: ["FluentSQLExtensions", "FluentPostgreSQLExtensions"]),
     ],
     dependencies: [
         .package(url: "https://github.com/vapor/fluent.git", from: Version(2, 0, 0)),
