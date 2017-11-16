@@ -1,5 +1,5 @@
 //
-//  Preparation.swift
+//  LoadSQLFromFile.swift
 //  FluentSQLExtensions
 //
 //  Created by David Monagle on 16/11/16.
@@ -8,14 +8,6 @@
 
 import Fluent
 import Foundation
-
-/// Base Preparation Class for loading SQL Files or Directories
-
-public protocol GeoPostgreSQLPreparation : Preparation {
-}
-
-extension GeoPostgreSQLPreparation {
-}
 
 extension Database {
     public func loadSQLFrom(filePath: String) throws {
