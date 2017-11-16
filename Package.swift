@@ -1,14 +1,18 @@
-// swift-tools-version:3.1
+// swift-tools-version:4.0
 
 import PackageDescription
 
 let package = Package(
     name: "FluentSQLExtensions",
-    targets: [
-        Target(name: "FluentSQLExtensions"),
-        Target(name: "FluentPostgreSQLExtensions", dependencies: ["FluentSQLExtensions"]),
+    products: [
     ],
     dependencies: [
-        .Package(url: "https://github.com/vapor/fluent.git", majorVersion: 2),
+        .package(url: "https://github.com/vapor/fluent.git", from: Version(2, 0, 0)),
+    ],
+    targets: [
+        .target(name: "FluentSQLExtensions", dependencies: ["Fluent"]),
+        .target(name: "FluentPostgreSQLExtensions", dependencies: ["FluentSQLExtensions"]),
     ]
 )
+
+package.swiftLanguageVersions = [3, 4]
