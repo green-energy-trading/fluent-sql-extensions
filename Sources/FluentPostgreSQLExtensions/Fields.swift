@@ -1,14 +1,6 @@
 import Fluent
 
 extension Builder {
-    /// Convenience to create timestamp fields.
-    /// This will need a call to createUpdatedAtTrigger outside of the builder to create the trigger to set updated_at (PostgreSQL Only?)
-    /// This has the minor side effect that every time this is called it updates the function that sets the timestamp
-    /// It shouldn't do any damage, it's just slightly suboptimal when running preparations.
-    public func createAutoTimestamps() {
-        custom("created_at", type: "TIMESTAMP WITH TIME ZONE", optional: false, unique: false, default: "now()")
-        custom("updated_at", type: "TIMESTAMP WITH TIME ZONE", optional: true, unique: false)
-    }
 }
 
 extension Executor {
@@ -22,6 +14,31 @@ extension Executor {
         try self.raw("CREATE TYPE \(name) AS ENUM (\(valueString));")
     }
     
+    /// Alters a table to add a field of the specific type. This uses raw SQL so that default functions etc can be used
+    public func createField(
+        on table: String,
+        withName name: String,
+        type: String,
+        optional: Bool = false,
+        defaultValue: String? = nil
+        ) throws {
+        let nullable = optional ? "" : " NOT NULL";
+        let defaultClause = defaultValue == nil ? "" : " DEFAULT \(defaultValue!)";
+        let query = "ALTER TABLE \(table) ADD COLUMN \(name) \(type)\(nullable)\(defaultClause);"
+        try self.raw(query)
+    }
+    
+    /// Alters a table to add a field of the specific type. This uses raw SQL so that default functions etc can be used
+    public func createField(
+        on entity: Entity,
+        withName name: String,
+        type dbType: String,
+        optional: Bool = false,
+        defaultValue: String? = nil
+        ) throws {
+        return try createField(on: type(of: entity).entity, withName: name, type: dbType, optional: optional, defaultValue: defaultValue)
+    }
+    
     /// Drops a type with an optional cascade
     public func dropType(
         withName name: String,
@@ -30,13 +47,19 @@ extension Executor {
         let cascadeCommand = cascade ? " CASCADE" : "";
         try self.raw("DROP TYPE IF EXISTS \(name)\(cascadeCommand);")
     }
-
-    /// Creates a trigger for the given entity that will updated updated_at when a record is saved.
-    /// Your application needs to create the trigger function (only once) within a preparation using createSetUpdatedAtFunction before this is called
-    public func createUpdatedAtTrigger(on entity: String) throws {
-        try self.raw("CREATE TRIGGER \(entity)_updated_at_trigger BEFORE UPDATE ON \(entity) FOR EACH ROW EXECUTE PROCEDURE set_updated_at();")
+    
+    /// Convenience to create timestamp fields with triggers (PostgreSQL Only?)
+    public func createTimestamps(on table: String) throws {
+        try createField(on: table, withName: "created_at", type: "TIMESTAMP WITH TIME ZONE", defaultValue: "now()")
+        try createField(on: table, withName: "updated_at", type: "TIMESTAMP WITH TIME ZONE", optional: true)
+        try self.raw("CREATE TRIGGER \(table)_updated_at_trigger BEFORE UPDATE ON \(table) FOR EACH ROW EXECUTE PROCEDURE set_updated_at();")
+        
     }
     
+    public func createTimestamps(on entity: Entity) throws {
+        return try createTimestamps(on: type(of: entity).entity)
+    }
+
     public func createSetUpdatedAtFunction() throws {
         try self.raw("""
             CREATE OR REPLACE FUNCTION set_updated_at()
